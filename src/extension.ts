@@ -1,7 +1,7 @@
 import { ChildProcessWithoutNullStreams, execFile } from "child_process";
 import * as path from "path";
 import * as vscode from "vscode";
-import { LanguageClient } from "vscode-languageclient/node";
+import { InlayHintRequest, LanguageClient } from "vscode-languageclient/node";
 import { applyConfiguredTrace, startClient } from "./client";
 import {
     checkForServerUpdate,
@@ -55,6 +55,10 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         vscode.workspace.onDidChangeConfiguration((event) => {
             if (event.affectsConfiguration("phpantom.trace.server") && client) {
                 applyConfiguredTrace(client);
+            }
+
+            if (event.affectsConfiguration("phpantom.inlayHints")) {
+                refreshInlayHints();
             }
 
             const changedServerSettings = getChangedServerSettings(event);
@@ -306,6 +310,33 @@ async function handleUpdateResult(
     }
 
     outputChannel.appendLine("PHPantom language server update will be used after the next restart.");
+}
+
+function refreshInlayHints(): void {
+    if (!client) {
+        return;
+    }
+
+    try {
+        const inlayHintFeature = client.getFeature(InlayHintRequest.method);
+        const refreshed = new Set<vscode.Event<void>>();
+
+        for (const editor of vscode.window.visibleTextEditors) {
+            if (editor.document.languageId !== "php") {
+                continue;
+            }
+
+            const provider = inlayHintFeature.getProvider(editor.document);
+            if (!provider || refreshed.has(provider.onDidChangeInlayHints.event)) {
+                continue;
+            }
+
+            provider.onDidChangeInlayHints.fire();
+            refreshed.add(provider.onDidChangeInlayHints.event);
+        }
+    } catch (error) {
+        outputChannel.appendLine(`Could not refresh PHPantom inlay hints: ${formatError(error)}`);
+    }
 }
 
 async function showServerVersion(context: vscode.ExtensionContext): Promise<void> {

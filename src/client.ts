@@ -8,6 +8,7 @@ import {
 } from "vscode-languageclient/node";
 import { resolveServerBinary } from "./downloader";
 import { enhancePhpHover } from "./hover";
+import { filterPhpInlayHints } from "./inlayHints";
 import { augmentPhpDocumentSymbols } from "./phpSymbols";
 
 export interface StartedClient {
@@ -66,6 +67,10 @@ export async function startClient(
             async provideDocumentSymbols(document, token, next) {
                 const symbols = await next(document, token);
                 return augmentPhpDocumentSymbols(document, symbols);
+            },
+            async provideInlayHints(document, viewPort, token, next) {
+                const hints = await next(document, viewPort, token);
+                return filterPhpInlayHints(document, hints);
             }
         }
     };

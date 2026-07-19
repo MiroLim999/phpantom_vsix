@@ -52,6 +52,14 @@ Automatically check for newer downloaded `phpantom_lsp` releases when `phpantom.
 
 How often to check for newer PHPantom language server releases while the extension is active. The extension also checks once on startup without blocking activation. Defaults to `24`.
 
+`phpantom.inlayHints.enabled`
+
+Show PHPantom inlay hints in PHP files. Enabled by default. Disable to remove all inlay hint ghost text provided by the language server.
+
+`phpantom.inlayHints.parameterNames.enabled`
+
+Show parameter-name inlay hints, such as the `view:` and `data:` labels rendered before call arguments. Enabled by default. Disable to hide only the parameter-name ghost text while keeping any other inlay hints. Ignored when `phpantom.inlayHints.enabled` is off.
+
 `phpantom.trace.server`
 
 Controls Language Server Protocol tracing. Values are `off`, `messages`, and `verbose`.

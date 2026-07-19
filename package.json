@@ -85,6 +85,16 @@
                     "maximum": 168,
                     "description": "How often to check for newer PHPantom language server releases while the extension is active. The extension also checks once on startup without blocking activation."
                 },
+                "phpantom.inlayHints.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show PHPantom inlay hints in PHP files. Disable to remove all inlay hint ghost text provided by the language server."
+                },
+                "phpantom.inlayHints.parameterNames.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show parameter-name inlay hints (for example the \"view:\" and \"data:\" labels before call arguments). Disable to hide only the parameter-name ghost text while keeping other inlay hints. Ignored when phpantom.inlayHints.enabled is off."
+                },
                 "phpantom.trace.server": {
                     "type": "string",
                     "enum": [
