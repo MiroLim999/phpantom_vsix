@@ -8,6 +8,7 @@ import {
     clearDownloadedServer
 } from "./downloader";
 import { registerHoverCommands } from "./hover";
+import { expandHome, formatError } from "./util";
 
 let client: LanguageClient | undefined;
 let activeServerPath: string | undefined;
@@ -40,9 +41,6 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
             await showServerVersion(context);
         }),
         vscode.commands.registerCommand("phpantom.checkForUpdate", async () => {
-            await checkForUpdates(context, true);
-        }),
-        vscode.commands.registerCommand("phpantom.downloadServer", async () => {
             await checkForUpdates(context, true);
         }),
         vscode.commands.registerCommand("phpantom.clearDownloadedServer", async () => {
@@ -370,7 +368,7 @@ async function showServerVersion(context: vscode.ExtensionContext): Promise<void
 
 function getServerVersion(binaryPath: string): Promise<string> {
     return new Promise((resolve, reject) => {
-        execFile(binaryPath, ["--version"], { timeout: 3000 }, (error, stdout, stderr) => {
+        execFile(binaryPath, ["--version"], { timeout: 3000, windowsHide: true }, (error, stdout, stderr) => {
             if (error) {
                 reject(error);
                 return;
@@ -577,25 +575,4 @@ function samePath(left: string, right: string): boolean {
 function isInsidePath(child: string, parent: string): boolean {
     const relative = path.relative(path.resolve(parent), path.resolve(child));
     return relative === "" || (!!relative && !relative.startsWith("..") && !path.isAbsolute(relative));
-}
-
-function expandHome(file: string): string {
-    if (file === "~") {
-        return process.env.HOME ?? file;
-    }
-
-    if (file.startsWith(`~${path.sep}`)) {
-        const home = process.env.HOME;
-        return home ? path.join(home, file.slice(2)) : file;
-    }
-
-    return file;
-}
-
-function formatError(error: unknown): string {
-    if (error instanceof Error) {
-        return error.message;
-    }
-
-    return String(error);
 }

@@ -10,6 +10,7 @@ import AdmZip from "adm-zip";
 import * as tar from "tar";
 import * as vscode from "vscode";
 import { getPlatformInfo, PlatformInfo } from "./platform";
+import { expandHome, formatError } from "./util";
 
 const repository = "AJenbo/phpantom_lsp";
 const apiBaseUrl = `https://api.github.com/repos/${repository}/releases`;
@@ -86,7 +87,26 @@ export async function resolveServerBinary(
     );
 }
 
-export async function downloadServer(
+// Serializes downloads so an overlapping manual "Check for Update" and a
+// background/scheduled update check cannot run downloadServer concurrently and
+// clobber each other's ".download" work directory. Once the first download
+// finishes, later queued calls short-circuit on the cached binary.
+let downloadQueue: Promise<unknown> = Promise.resolve();
+
+export function downloadServer(
+    context: vscode.ExtensionContext,
+    outputChannel: vscode.OutputChannel,
+    force = false
+): Promise<string> {
+    const run = downloadQueue.then(
+        () => performDownloadServer(context, outputChannel, force),
+        () => performDownloadServer(context, outputChannel, force)
+    );
+    downloadQueue = run.catch(() => undefined);
+    return run;
+}
+
+async function performDownloadServer(
     context: vscode.ExtensionContext,
     outputChannel: vscode.OutputChannel,
     force = false
@@ -678,21 +698,4 @@ async function readLatestMarker(context: vscode.ExtensionContext): Promise<Lates
     } catch {
         return undefined;
     }
-}
-
-function expandHome(file: string): string {
-    if (file === "~") {
-        return process.env.HOME ?? file;
-    }
-
-    if (file.startsWith(`~${path.sep}`)) {
-        const home = process.env.HOME;
-        return home ? path.join(home, file.slice(2)) : file;
-    }
-
-    return file;
-}
-
-function formatError(error: unknown): string {
-    return error instanceof Error ? error.message : String(error);
 }
